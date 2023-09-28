@@ -11,7 +11,7 @@ class Editor:
         self,
         screen_size=(1024, 640),
         map_size=(480,640),
-        tile_size=32,
+        tile_size=(32,32),
         draw_region_color=(0,0,0),
         bg_color=(145, 169, 179),
         grid_color=(255,255,255),
@@ -45,7 +45,7 @@ class Editor:
 
         self.eraser_surf = clss.GenericSurf(
             pos=(0,0),
-            size=(self.tile_size, self.tile_size),
+            size=(self.tile_size[0], self.tile_size[1]),
             color=self.draw_region_color
         )
         self.top_tab = clss.GenericSurf(
@@ -60,7 +60,6 @@ class Editor:
         )
 
         self.tileset_index = 0
-        self.scrow = self.tile_size*2
         self.direction = pygame.math.Vector2()
         self.clock = pygame.time.Clock()
 
@@ -87,11 +86,11 @@ class Editor:
         temp_list = []
         x = y = index = 0
         h = 1
-        for _ in range((width//self.tile_size)*(height//self.tile_size)):
+        for _ in range((width//self.tile_size[0])*(height//self.tile_size[1])):
             try:
                 img = tileset.subsurface(
-                    (x*self.tile_size, y*self.tile_size,
-                     self.tile_size, self.tile_size)).convert_alpha()
+                    (x*self.tile_size[0], y*self.tile_size[1],
+                     self.tile_size[0], self.tile_size[1])).convert_alpha()
                 img = pygame.transform.scale(img, (32,32))
 
                 temp_list.append(
@@ -107,7 +106,7 @@ class Editor:
             except Exception:
                 x += 1
 
-            if x % (width//self.tile_size) == 0 and x != 0:
+            if x % (width//self.tile_size[0]) == 0 and x != 0:
                 y += 1
                 x = 0
 
@@ -132,13 +131,13 @@ class Editor:
 
     def create_surfaces(self):
         temp_list = []
-        for y in range(round(self.map_size[1]/self.tile_size)):
-            for x in range(round(self.map_size[0]/self.tile_size)):
+        for y in range(round(self.map_size[1]/self.tile_size[1])):
+            for x in range(round(self.map_size[0]/self.tile_size[0])):
                 temp_list.append(
                     [(x, y),
                      clss.GenericSurf(
-                         pos=(x*self.tile_size, y*self.tile_size),
-                         size=(self.tile_size, self.tile_size),
+                         pos=(x*self.tile_size[0], y*self.tile_size[1]),
+                         size=(self.tile_size[0], self.tile_size[1]),
                          color=self.draw_region_color),
                      -1
                     ]
@@ -149,17 +148,19 @@ class Editor:
 
     def create_grid(self):
         temp_list = []
-        for x in range(round(self.screen_surface_width/self.tile_size)):
+        for x in range(round(self.screen_surface_width/self.tile_size[0])):
             temp_list.append(pygame.draw.line(
                     self.screen, self.grid_color,
-                   (x*self.tile_size, 0), (x*self.tile_size, self.screen_surface_height)
+                    (x*self.tile_size[0], 0),
+                    (x*self.tile_size[0],self.screen_surface_height)
                 )
             )
 
-        for y in range(round(self.screen_surface_height/self.tile_size)):
+        for y in range(round(self.screen_surface_height/self.tile_size[1])):
              temp_list.append(pygame.draw.line(
                     self.screen, self.grid_color,
-                    (0, y*self.tile_size), (self.screen_surface_width, y*self.tile_size)
+                    (0, y*self.tile_size[1]),
+                    (self.screen_surface_width, y*self.tile_size[1])
                 )
             )
 
@@ -175,22 +176,22 @@ class Editor:
         if direction.x > 0\
         and self.surface_list[1][1].rect.x < self.screen_surface_width:
             for x in range(len(self.surface_list)):
-                self.surface_list[x][1].rect.x += self.tile_size
+                self.surface_list[x][1].rect.x += self.tile_size[0]
 
         elif direction.x < 0\
         and self.surface_list[-1][1].rect.x > 0:
             for x in range(len(self.surface_list)):
-                self.surface_list[x][1].rect.x -= self.tile_size
+                self.surface_list[x][1].rect.x -= self.tile_size[0]
 
         if direction.y > 0\
         and self.surface_list[-1][1].rect.y > 0:
             for x in range(len(self.surface_list)):
-                self.surface_list[x][1].rect.y -= self.tile_size
+                self.surface_list[x][1].rect.y -= self.tile_size[1]
 
         elif direction.y < 0\
         and self.surface_list[1][1].rect.y < self.screen_surface_height:
             for x in range(len(self.surface_list)):
-                self.surface_list[x][1].rect.y += self.tile_size
+                self.surface_list[x][1].rect.y += self.tile_size[1]
 
 
     def draw_menus(self):
@@ -212,7 +213,7 @@ class Editor:
             arq.write('level=[')
             x = 0
             for tile in editor.surface_list:
-                if x >= editor.map_size[0]//editor.tile_size:
+                if x >= editor.map_size[0]//editor.tile_size[0]:
                     arq.write('\n')
                     x = 0
                 arq.write(f'{str(tile[2])},')
@@ -300,12 +301,12 @@ class Editor:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 5 and self.tiles_list[0][1].y < 0:
                         for index, _ in enumerate(self.tiles_list):
-                            self.tiles_list[index][1].y += self.scrow
+                            self.tiles_list[index][1].y += 64
 
                     elif event.button == 4\
                     and self.tiles_list[-1][1].bottom > self.screen_surface_height:
                         for index, _ in enumerate(self.tiles_list):
-                                self.tiles_list[index][1].y -= self.scrow
+                                self.tiles_list[index][1].y -= 64
 
                     elif event.button == 1:
                         pos = pygame.mouse.get_pos()
